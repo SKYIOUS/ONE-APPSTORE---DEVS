@@ -1,0 +1,77 @@
+# Gradle
+.gradle/
+build/
+local.properties
+gradle-app.setting
+.gradletasknamecache
+
+# Idea
+.idea/
+*.iml
+*.iws
+*.ipr
+*.iws
+.idea/shelf
+.idea/libraries/Gradle*.xml
+.idea/gradle.xml
+.idea/modules.xml
+.idea/workspace.xml
+.idea/runConfigurations.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/tasks.xml
+.idea/.name
+.idea/compiler.xml
+.idea/copyright/profiles_settings.xml
+.idea/encodings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/scopes/scope_settings.xml
+.idea/vcs.xml
+
+# Xcode
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+*.xcworkspace
+
+# Android Studio
+captures/
+.externalNativeBuild
+.cxx
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Fleet
+.fleet/
+
+# Wasm
+*.wasm
+*.map
+
+# OS Specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Kotlin
+kotlin-js-store/
+
+# Project specific
+*.jks
+*.keystore
+*.p12
+
+# Logs
+*.log
