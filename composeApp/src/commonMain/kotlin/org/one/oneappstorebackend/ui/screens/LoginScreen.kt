@@ -2,146 +2,94 @@ package org.one.oneappstorebackend.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.one.oneappstorebackend.viewmodel.AuthState
 import org.one.oneappstorebackend.viewmodel.AuthViewModel
 
-import oneappstore_devs.composeapp.generated.resources.Res
-import oneappstore_devs.composeapp.generated.resources.compose_multiplatform
-
 /**
  * Login screen for the app.
- * @param onAuthSuccess Callback when authentication is successful.
+ * @param onLoginSuccess Callback when authentication is successful.
  */
 @Composable
 fun LoginScreen(
-    onAuthSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    authViewModel: AuthViewModel = koinInject()
 ) {
-    val viewModel: AuthViewModel = koinInject()
-    val authState by viewModel.authState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val authState by authViewModel.authState.collectAsState()
     
+    // Check if already authenticated
     LaunchedEffect(authState) {
-        when (authState) {
-            is AuthState.Authenticated -> onAuthSuccess()
-            is AuthState.Error -> {
-                snackbarHostState.showSnackbar(
-                    (authState as AuthState.Error).message
-                )
-            }
-            else -> {}
+        if (authState is AuthState.Authenticated) {
+            onLoginSuccess()
         }
     }
     
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Developer Login") }
-            )
-        }
-    ) { padding ->
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Image(
-                painter = painterResource(Res.drawable.compose_multiplatform),
-                contentDescription = "App Logo",
-                modifier = Modifier.size(120.dp)
-            )
+            // Logo
+            Box(
+                modifier = Modifier.size(120.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Replace with your app logo
+                Text("ONE", style = MaterialTheme.typography.h3)
+            }
             
-            Spacer(modifier = Modifier.height(24.dp))
-            
+            // App name
             Text(
-                text = "Multiplatform App Store",
-                style = MaterialTheme.typography.h5,
-                textAlign = TextAlign.Center
+                text = "ONE App Store",
+                style = MaterialTheme.typography.h5
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
-            
+            // Description
             Text(
                 text = "Developer Portal",
                 style = MaterialTheme.typography.subtitle1,
-                textAlign = TextAlign.Center
+                modifier = Modifier.padding(bottom = 24.dp)
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            // Login button
+            Button(
+                onClick = { authViewModel.authenticate() },
+                enabled = authState !is AuthState.Loading
+            ) {
+                Text("Login with GitHub")
+            }
             
-            Text(
-                text = "Publish and manage your applications across multiple platforms",
-                style = MaterialTheme.typography.body2,
-                textAlign = TextAlign.Center
-            )
+            // Show loading indicator if authenticating
+            if (authState is AuthState.Loading) {
+                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+            }
             
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            when (authState) {
-                is AuthState.Loading -> {
-                    CircularProgressIndicator()
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = "Authenticating with GitHub...",
-                        style = MaterialTheme.typography.caption,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                is AuthState.Unauthenticated, is AuthState.Error -> {
-                    Button(
-                        onClick = { viewModel.authenticate() },
-                        modifier = Modifier.fillMaxWidth(0.8f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Code,
-                            contentDescription = "GitHub Icon",
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text("Login with GitHub")
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = "You'll be redirected to GitHub to authorize this application",
-                        style = MaterialTheme.typography.caption,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(0.8f)
-                    )
-                }
-                else -> {}
+            // Show error message if authentication failed
+            if (authState is AuthState.Error) {
+                Text(
+                    text = (authState as AuthState.Error).message,
+                    color = MaterialTheme.colors.error,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
         }
     }

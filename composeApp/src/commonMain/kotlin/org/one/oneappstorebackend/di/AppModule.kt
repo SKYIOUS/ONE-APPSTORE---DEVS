@@ -1,9 +1,11 @@
 package org.one.oneappstorebackend.di
 
+import io.ktor.client.HttpClient
 import org.koin.dsl.module
 import org.one.oneappstorebackend.repository.AppRepository
 import org.one.oneappstorebackend.repository.AuthRepository
 import org.one.oneappstorebackend.service.GitHubService
+import org.one.oneappstorebackend.service.GitHubServiceImpl
 import org.one.oneappstorebackend.viewmodel.AppEditViewModel
 import org.one.oneappstorebackend.viewmodel.AppListViewModel
 import org.one.oneappstorebackend.viewmodel.AuthViewModel
@@ -11,9 +13,9 @@ import org.one.oneappstorebackend.viewmodel.AuthViewModel
 /**
  * Koin module for dependency injection.
  */
-val appModule = module {
+fun commonModule() = module {
     // ViewModels
-    factory { AuthViewModel(get(), get()) }
+    factory { AuthViewModel(get(), get(), get()) }
     factory { AppListViewModel(get()) }
     factory { AppEditViewModel(get()) }
     
@@ -32,7 +34,7 @@ val appModule = module {
 /**
  * Platform specific implementation will be provided by each platform.
  */
-expect fun createHttpClient(): Any
+expect fun createHttpClient(): HttpClient
 
 /**
  * Platform specific implementation will be provided by each platform.
@@ -60,13 +62,13 @@ class GitHubAppRepository(private val gitHubService: GitHubService) : AppReposit
         developerId: String, 
         appMetadata: org.one.oneappstorebackend.model.AppMetadata, 
         channel: org.one.oneappstorebackend.model.ReleaseChannel
-    ) = gitHubService.uploadAppMetadata(developerId, appMetadata, channel)
+    ): Boolean = gitHubService.uploadAppMetadata(developerId, appMetadata, channel)
     
     override suspend fun updateApp(
         developerId: String, 
         appMetadata: org.one.oneappstorebackend.model.AppMetadata, 
         channel: org.one.oneappstorebackend.model.ReleaseChannel
-    ) = gitHubService.uploadAppMetadata(developerId, appMetadata, channel)
+    ): Boolean = gitHubService.uploadAppMetadata(developerId, appMetadata, channel)
     
     override suspend fun uploadAppPackage(
         developerId: String, 
@@ -75,7 +77,7 @@ class GitHubAppRepository(private val gitHubService: GitHubService) : AppReposit
         fileName: String, 
         fileBytes: ByteArray,
         channel: org.one.oneappstorebackend.model.ReleaseChannel
-    ) = gitHubService.uploadAppPackage(developerId, appId, platform, fileName, fileBytes, channel)
+    ): String? = gitHubService.uploadAppPackage(developerId, appId, platform, fileName, fileBytes, channel)
     
     override suspend fun createRelease(
         developerId: String, 
@@ -83,7 +85,7 @@ class GitHubAppRepository(private val gitHubService: GitHubService) : AppReposit
         version: String, 
         releaseNotes: String,
         channel: org.one.oneappstorebackend.model.ReleaseChannel
-    ) = gitHubService.createRelease(developerId, appId, version, releaseNotes, channel)
+    ): String? = gitHubService.createRelease(developerId, appId, version, releaseNotes, channel)
     
     override suspend fun deleteApp(developerId: String, appId: String): Boolean {
         // TODO: Implement app deletion through GitHubService

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.one.oneappstorebackend.model.DeveloperProfile
 import org.one.oneappstorebackend.repository.AuthRepository
+import org.one.oneappstorebackend.repository.AppRepository
 import org.one.oneappstorebackend.service.GitHubService
 
 /**
@@ -14,7 +15,8 @@ import org.one.oneappstorebackend.service.GitHubService
  */
 class AuthViewModel(
     private val authRepository: AuthRepository,
-    private val gitHubService: GitHubService
+    private val gitHubService: GitHubService,
+    private val appRepository: AppRepository
 ) : ViewModel() {
     
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
@@ -25,6 +27,9 @@ class AuthViewModel(
     
     // Platform-specific auth handler
     private var authHandler: Any? = null
+    
+    // Platform-specific authentication callback
+    private var authenticationCallback: (suspend () -> String?)? = null
     
     init {
         viewModelScope.launch {
@@ -52,6 +57,13 @@ class AuthViewModel(
     }
     
     /**
+     * Sets a platform-specific authentication callback.
+     */
+    fun setAuthenticationCallback(callback: suspend () -> String?) {
+        authenticationCallback = callback
+    }
+    
+    /**
      * Authenticates the user with GitHub.
      * This will use the platform-specific auth handler.
      */
@@ -60,9 +72,12 @@ class AuthViewModel(
             try {
                 _authState.value = AuthState.Loading
                 
-                // Platform-specific authentication will be handled here
-                // The actual implementation depends on the platform
-                val token = gitHubService.authenticate()
+                // Use platform-specific authentication if available
+                val token = if (authenticationCallback != null) {
+                    authenticationCallback?.invoke()
+                } else {
+                    gitHubService.authenticate()
+                }
                 
                 if (token != null) {
                     authRepository.saveAuthToken(token)

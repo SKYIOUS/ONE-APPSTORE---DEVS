@@ -18,10 +18,7 @@ import org.one.oneappstorebackend.model.ReleaseChannel
 /**
  * Implementation of GitHubService using the GitHub API.
  */
-class GitHubServiceImpl(private val httpClient: Any) : GitHubService {
-    
-    // Convert Any to HttpClient
-    private val client = httpClient as HttpClient
+class GitHubServiceImpl(private val httpClient: HttpClient) : GitHubService {
     
     // Store the authentication token
     private var authToken: String? = null
@@ -30,10 +27,10 @@ class GitHubServiceImpl(private val httpClient: Any) : GitHubService {
      * Platform-specific authentication will call this method with the authorization code.
      * This method exchanges the code for an access token.
      */
-    suspend fun completeAuthentication(code: String): String? {
+    override suspend fun completeAuthentication(code: String): String? {
         try {
             // Exchange authorization code for access token
-            val response = client.post(OAuthConfig.GITHUB_TOKEN_URL) {
+            val response = httpClient.post(OAuthConfig.GITHUB_TOKEN_URL) {
                 contentType(ContentType.Application.Json)
                 setBody(
                     mapOf(
@@ -65,7 +62,7 @@ class GitHubServiceImpl(private val httpClient: Any) : GitHubService {
         val token = authToken ?: return null
         
         try {
-            val response = client.get(OAuthConfig.GITHUB_USER_API_URL) {
+            val response = httpClient.get(OAuthConfig.GITHUB_USER_API_URL) {
                 header("Authorization", "token $token")
             }
             
@@ -149,20 +146,20 @@ class GitHubServiceImpl(private val httpClient: Any) : GitHubService {
     
     @Serializable
     private data class TokenResponse(
-        val access_token: String,
-        val token_type: String = "bearer",
-        val scope: String = ""
+        val access_token: String? = null,
+        val token_type: String? = null,
+        val scope: String? = null
     )
     
     @Serializable
     private data class GitHubUser(
-        val id: Int,
         val login: String,
+        val id: Int,
         val name: String? = null,
-        val avatar_url: String,
+        val email: String? = null,
         val bio: String? = null,
         val blog: String? = null,
-        val email: String? = null,
+        val avatar_url: String,
         val html_url: String
     )
 } 

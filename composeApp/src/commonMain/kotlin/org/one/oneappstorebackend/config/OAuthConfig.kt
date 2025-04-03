@@ -6,8 +6,8 @@ package org.one.oneappstorebackend.config
  */
 object OAuthConfig {
     // Replace these with your actual GitHub OAuth app credentials
-    const val GITHUB_CLIENT_ID = "your_github_client_id"
-    const val GITHUB_CLIENT_SECRET = "your_github_client_secret"
+    const val GITHUB_CLIENT_ID = "Ov23liAP64oZRebzypXs"
+    const val GITHUB_CLIENT_SECRET = "87055a414362088a9001322e6397944e887ec233"
     
     // OAuth endpoints
     const val GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize"

@@ -15,6 +15,14 @@ interface GitHubService {
     suspend fun authenticate(): String?
     
     /**
+     * Completes the authentication process by exchanging a code for a token.
+     * This is called by platform-specific authentication handlers.
+     * @param code The authorization code received from GitHub OAuth.
+     * @return The access token if successful, null otherwise.
+     */
+    suspend fun completeAuthentication(code: String): String?
+    
+    /**
      * Gets the user profile from GitHub after authentication.
      * @return The developer profile if successful, null otherwise.
      */
@@ -46,41 +54,37 @@ interface GitHubService {
      * Uploads app metadata to the developer's repository.
      * @param developerId The unique identifier for the developer.
      * @param appMetadata The metadata of the app to upload.
-     * @param channel The release channel (stable or beta).
+     * @param channel The release channel to upload to.
      * @return True if successful, false otherwise.
      */
-    suspend fun uploadAppMetadata(
-        developerId: String, 
-        appMetadata: AppMetadata, 
-        channel: ReleaseChannel
-    ): Boolean
+    suspend fun uploadAppMetadata(developerId: String, appMetadata: AppMetadata, channel: ReleaseChannel): Boolean
     
     /**
-     * Uploads an app package to the developer's repository.
+     * Uploads an app package (APK, IPA, etc) to the developer's repository.
      * @param developerId The unique identifier for the developer.
      * @param appId The unique identifier for the app.
-     * @param platform The platform identifier (android, ios, etc.).
+     * @param platform The platform of the app (android, ios, etc).
      * @param fileName The name of the file to upload.
-     * @param fileBytes The content of the file to upload.
-     * @param channel The release channel (stable or beta).
+     * @param fileBytes The bytes of the file to upload.
+     * @param channel The release channel to upload to.
      * @return The URL of the uploaded file if successful, null otherwise.
      */
     suspend fun uploadAppPackage(
-        developerId: String,
-        appId: String,
-        platform: String,
-        fileName: String,
-        fileBytes: ByteArray,
+        developerId: String, 
+        appId: String, 
+        platform: String, 
+        fileName: String, 
+        fileBytes: ByteArray, 
         channel: ReleaseChannel
     ): String?
     
     /**
-     * Creates a new release in the developer's repository.
+     * Creates a new release for an app.
      * @param developerId The unique identifier for the developer.
      * @param appId The unique identifier for the app.
      * @param version The version of the release.
-     * @param releaseNotes The notes for the release.
-     * @param channel The release channel (stable or beta).
+     * @param releaseNotes The release notes.
+     * @param channel The release channel to create the release in.
      * @return The URL of the created release if successful, null otherwise.
      */
     suspend fun createRelease(

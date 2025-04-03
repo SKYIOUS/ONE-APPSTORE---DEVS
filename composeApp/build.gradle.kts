@@ -12,6 +12,12 @@ plugins {
     kotlin("plugin.serialization") version "1.9.0"
 }
 
+// Define version variables
+val ktorVersion = "2.3.5"
+val multiplatformSettingsVersion = "1.1.0"
+val coroutinesVersion = "1.7.3"
+val koinVersion = "3.5.0"
+
 kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -37,17 +43,14 @@ kotlin {
     wasmJs {
         moduleName = "composeApp"
         browser {
-            val rootDirPath = project.rootDir.path
-            val projectDirPath = project.projectDir.path
             commonWebpackConfig {
                 outputFileName = "composeApp.js"
-                devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
-                    static = (static ?: mutableListOf()).apply {
-                        // Serve sources to debug inside browser
-                        add(rootDirPath)
-                        add(projectDirPath)
-                    }
-                }
+            }
+            runTask {
+                outputFileName = "composeApp.js"
+                devServer = devServer.copy(
+                    port = 8080
+                )
             }
         }
         binaries.executable()
@@ -86,39 +89,65 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             
             // Ktor for networking
-            implementation("io.ktor:ktor-client-core:2.3.5")
-            implementation("io.ktor:ktor-client-content-negotiation:2.3.5")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.5")
+            implementation("io.ktor:ktor-client-core:$ktorVersion")
+            implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
             
             // Kotlinx Serialization for JSON
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
             
             // Coroutines
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
             
             // Koin for dependency injection
-            implementation("io.insert-koin:koin-core:3.5.0")
+            implementation("io.insert-koin:koin-core:$koinVersion")
             implementation("io.insert-koin:koin-compose:1.1.0")
             
             // DateTime library
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
             
             // Multiplatform Settings for storing preferences
-            implementation("com.russhwolf:multiplatform-settings:1.1.0")
-            implementation("com.russhwolf:multiplatform-settings-coroutines:1.1.0")
+            implementation("com.russhwolf:multiplatform-settings:$multiplatformSettingsVersion")
+            implementation("com.russhwolf:multiplatform-settings-coroutines:$multiplatformSettingsVersion")
         }
         
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             // Desktop specific network
-            implementation("io.ktor:ktor-client-java:2.3.5")
+            implementation("io.ktor:ktor-client-java:$ktorVersion")
         }
         
         // Add WASM specific dependencies
         val wasmJsMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-js:2.3.5")
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material)
+                implementation(compose.ui)
+                
+                implementation("io.ktor:ktor-client-js:$ktorVersion")
+                implementation("com.russhwolf:multiplatform-settings:$multiplatformSettingsVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:$coroutinesVersion")
+                implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+            }
+        }
+        
+        val androidMain by getting {
+            dependencies {
+                implementation("androidx.activity:activity-compose:1.8.0")
+                implementation("androidx.appcompat:appcompat:1.6.1")
+                implementation("androidx.core:core-ktx:1.12.0")
+                implementation("io.ktor:ktor-client-android:$ktorVersion")
+                implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+                implementation("androidx.browser:browser:1.5.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
+                
+                // Koin for Android
+                implementation("io.insert-koin:koin-android:$koinVersion")
+                implementation("io.insert-koin:koin-androidx-compose:$koinVersion")
             }
         }
     }

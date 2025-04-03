@@ -4,58 +4,59 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.one.oneappstorebackend.auth.GithubAuthHandler
-import org.one.oneappstorebackend.di.androidAppContext
-import org.one.oneappstorebackend.service.GitHubServiceImpl
-import org.one.oneappstorebackend.viewmodel.AuthViewModel
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.ui.Modifier
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+import org.one.oneappstorebackend.auth.AndroidAuthHandler
+import org.one.oneappstorebackend.di.AndroidPlatformFactory
+import org.one.oneappstorebackend.di.commonModule
 
 class MainActivity : ComponentActivity() {
-    private val authViewModel: AuthViewModel by viewModel()
-    private lateinit var githubAuthHandler: GithubAuthHandler
-    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Set the app context for dependency injection
-        androidAppContext = applicationContext
+        // Initialize Koin DI
+        startKoin {
+            androidContext(applicationContext)
+            modules(
+                commonModule(),
+                AndroidPlatformFactory.createPlatformModule(this@MainActivity)
+            )
+        }
         
-        // Initialize the GitHub auth handler
-        val gitHubService = authViewModel.getGitHubService() as GitHubServiceImpl
-        githubAuthHandler = GithubAuthHandler(applicationContext, gitHubService)
-        
-        // Set the auth handler in the view model
-        authViewModel.setAuthHandler(githubAuthHandler)
-        
-        // Handle the intent if it's from OAuth callback
+        // Handle initial intent if it's a deep link
         handleIntent(intent)
         
         setContent {
-            App()
-        }
-    }
-    
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        intent?.let { handleIntent(it) }
-    }
-    
-    private fun handleIntent(intent: Intent) {
-        // Check if this is a callback from the OAuth flow
-        if (intent.data != null) {
-            lifecycleScope.launch {
-                githubAuthHandler.handleAuthResponse(intent)
+            MaterialTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colors.background
+                ) {
+                    App()
+                }
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun AppAndroidPreview() {
-    App()
+    
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+    
+    private fun handleIntent(intent: Intent?) {
+        // Check if the intent is a deep link from GitHub OAuth
+        if (intent?.data != null) {
+            AndroidAuthHandler.getInstance()?.handleDeepLink(intent.data!!)
+        }
+    }
+    
+    override fun onDestroy() {
+        // Unregister the auth handler to prevent memory leaks
+        AndroidAuthHandler.getInstance()?.let { AndroidAuthHandler.unregister(it) }
+        super.onDestroy()
+    }
 }

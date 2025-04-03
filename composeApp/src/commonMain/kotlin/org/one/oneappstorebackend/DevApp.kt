@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
-import org.one.oneappstorebackend.di.appModule
+import org.one.oneappstorebackend.di.commonModule
 import org.one.oneappstorebackend.navigation.Routes
 import org.one.oneappstorebackend.ui.screens.AppListScreen
 import org.one.oneappstorebackend.ui.screens.LoginScreen
@@ -23,7 +23,7 @@ import org.one.oneappstorebackend.viewmodel.AuthViewModel
 @Composable
 fun DevApp() {
     KoinApplication(application = {
-        modules(appModule)
+        modules(commonModule())
     }) {
         MaterialTheme {
             MainNavigation()
@@ -35,43 +35,30 @@ fun DevApp() {
  * Main navigation for the app.
  */
 @Composable
-private fun MainNavigation() {
-    var currentRoute by remember { mutableStateOf(Routes.LOGIN) }
-    val authViewModel: AuthViewModel = koinInject()
+fun MainNavigation() {
+    var currentRoute by remember { mutableStateOf(Routes.Login) }
+    val authViewModel = koinInject<AuthViewModel>()
     val authState by authViewModel.authState.collectAsState()
     
+    // Check if user is already authenticated
     LaunchedEffect(authState) {
-        if (authState is AuthState.Authenticated && currentRoute == Routes.LOGIN) {
-            currentRoute = Routes.APP_LIST
-        } else if (authState is AuthState.Unauthenticated && currentRoute != Routes.LOGIN) {
-            currentRoute = Routes.LOGIN
+        currentRoute = when (authState) {
+            is AuthState.Authenticated -> Routes.AppList
+            is AuthState.Unauthenticated -> Routes.Login
+            else -> currentRoute
         }
     }
     
     when (currentRoute) {
-        Routes.LOGIN -> {
-            LoginScreen(
-                onAuthSuccess = {
-                    currentRoute = Routes.APP_LIST
-                }
-            )
-        }
-        Routes.APP_LIST -> {
-            AppListScreen(
-                onAppClick = { appId ->
-                    currentRoute = Routes.appDetail(appId)
-                },
-                onCreateAppClick = {
-                    currentRoute = Routes.APP_CREATE
-                },
-                onProfileClick = {
-                    currentRoute = Routes.PROFILE
-                }
-            )
-        }
-        // TODO: Add more routes
-        else -> {
-            // TODO: Handle other routes
-        }
+        Routes.Login -> LoginScreen(
+            onLoginSuccess = { currentRoute = Routes.AppList },
+            authViewModel = authViewModel
+        )
+        Routes.AppList -> AppListScreen(
+            onLogout = { 
+                authViewModel.logout()
+                currentRoute = Routes.Login
+            }
+        )
     }
 } 
