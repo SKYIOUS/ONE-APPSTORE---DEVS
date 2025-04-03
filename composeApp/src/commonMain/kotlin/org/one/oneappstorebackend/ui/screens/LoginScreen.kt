@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -81,29 +85,61 @@ fun LoginScreen(
             
             Text(
                 text = "Multiplatform App Store",
-                style = MaterialTheme.typography.h5
+                style = MaterialTheme.typography.h5,
+                textAlign = TextAlign.Center
             )
             
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
                 text = "Developer Portal",
-                style = MaterialTheme.typography.subtitle1
+                style = MaterialTheme.typography.subtitle1,
+                textAlign = TextAlign.Center
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                text = "Publish and manage your applications across multiple platforms",
+                style = MaterialTheme.typography.body2,
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
             
             when (authState) {
                 is AuthState.Loading -> {
                     CircularProgressIndicator()
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "Authenticating with GitHub...",
+                        style = MaterialTheme.typography.caption,
+                        textAlign = TextAlign.Center
+                    )
                 }
                 is AuthState.Unauthenticated, is AuthState.Error -> {
                     Button(
                         onClick = { viewModel.authenticate() },
                         modifier = Modifier.fillMaxWidth(0.8f)
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.Code,
+                            contentDescription = "GitHub Icon",
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
                         Text("Login with GitHub")
                     }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "You'll be redirected to GitHub to authorize this application",
+                        style = MaterialTheme.typography.caption,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    )
                 }
                 else -> {}
             }

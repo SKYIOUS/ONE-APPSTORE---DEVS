@@ -23,6 +23,9 @@ class AuthViewModel(
     private val _developerProfile = MutableStateFlow<DeveloperProfile?>(null)
     val developerProfile: StateFlow<DeveloperProfile?> = _developerProfile
     
+    // Platform-specific auth handler
+    private var authHandler: Any? = null
+    
     init {
         viewModelScope.launch {
             if (authRepository.isAuthenticated()) {
@@ -35,13 +38,32 @@ class AuthViewModel(
     }
     
     /**
+     * Sets the platform-specific auth handler.
+     */
+    fun setAuthHandler(handler: Any) {
+        authHandler = handler
+    }
+    
+    /**
+     * Gets the GitHub service for platform-specific implementations.
+     */
+    fun getGitHubService(): GitHubService {
+        return gitHubService
+    }
+    
+    /**
      * Authenticates the user with GitHub.
+     * This will use the platform-specific auth handler.
      */
     fun authenticate() {
         viewModelScope.launch {
             try {
                 _authState.value = AuthState.Loading
+                
+                // Platform-specific authentication will be handled here
+                // The actual implementation depends on the platform
                 val token = gitHubService.authenticate()
+                
                 if (token != null) {
                     authRepository.saveAuthToken(token)
                     _authState.value = AuthState.Authenticated

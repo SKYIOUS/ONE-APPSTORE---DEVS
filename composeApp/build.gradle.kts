@@ -63,6 +63,11 @@ kotlin {
             implementation("io.ktor:ktor-client-android:2.3.5")
             implementation("androidx.security:security-crypto:1.1.0-alpha06")
             implementation("net.openid:appauth:0.11.1")
+            // Browser dependency for Custom Tabs
+            implementation("androidx.browser:browser:1.6.0")
+            // Koin Android
+            implementation("io.insert-koin:koin-android:3.5.0")
+            implementation("io.insert-koin:koin-androidx-compose:3.5.0")
         }
 
         iosMain.dependencies {

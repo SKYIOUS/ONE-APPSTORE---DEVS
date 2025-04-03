@@ -1,6 +1,16 @@
 package org.one.oneappstorebackend.service
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import org.one.oneappstorebackend.config.OAuthConfig
 import org.one.oneappstorebackend.model.AppMetadata
 import org.one.oneappstorebackend.model.DeveloperProfile
 import org.one.oneappstorebackend.model.ReleaseChannel
@@ -13,30 +23,83 @@ class GitHubServiceImpl(private val httpClient: Any) : GitHubService {
     // Convert Any to HttpClient
     private val client = httpClient as HttpClient
     
-    // TODO: Implement authentication and GitHub API calls
+    // Store the authentication token
+    private var authToken: String? = null
+    
+    /**
+     * Platform-specific authentication will call this method with the authorization code.
+     * This method exchanges the code for an access token.
+     */
+    suspend fun completeAuthentication(code: String): String? {
+        try {
+            // Exchange authorization code for access token
+            val response = client.post(OAuthConfig.GITHUB_TOKEN_URL) {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    mapOf(
+                        "client_id" to OAuthConfig.GITHUB_CLIENT_ID,
+                        "client_secret" to OAuthConfig.GITHUB_CLIENT_SECRET,
+                        "code" to code
+                    )
+                )
+                header("Accept", "application/json")
+            }
+            
+            // Parse the token response
+            val tokenResponse: TokenResponse = response.body()
+            authToken = tokenResponse.access_token
+            return authToken
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
     
     override suspend fun authenticate(): String? {
-        // This would be implemented with platform-specific OAuth
-        return null
+        // This will be called by platform-specific authentication mechanism
+        // The actual OAuth flow is started in platform-specific code
+        return authToken
     }
     
     override suspend fun getDeveloperProfile(): DeveloperProfile? {
-        // This would get the developer profile from GitHub
-        return null
+        val token = authToken ?: return null
+        
+        try {
+            val response = client.get(OAuthConfig.GITHUB_USER_API_URL) {
+                header("Authorization", "token $token")
+            }
+            
+            val userInfo: GitHubUser = response.body()
+            
+            return DeveloperProfile(
+                id = userInfo.id.toString(),
+                githubUsername = userInfo.login,
+                displayName = userInfo.name ?: userInfo.login,
+                avatarUrl = userInfo.avatar_url,
+                bio = userInfo.bio ?: "",
+                email = userInfo.email ?: "",
+                website = userInfo.blog ?: "",
+                githubRepoUrl = userInfo.html_url,
+                isVerified = false // Default to false, can be updated later
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
     }
     
     override suspend fun createDeveloperRepository(developerId: String): String? {
-        // This would create a new repository on GitHub
+        // TODO: Implement repository creation
         return null
     }
     
     override suspend fun addRepositoryAsSubmodule(developerId: String, repoUrl: String): Boolean {
-        // This would add the repository as a submodule to the main repository
+        // TODO: Implement submodule addition
         return false
     }
     
     override suspend fun setupDeveloperDirectoryStructure(developerId: String): Boolean {
-        // This would create the directory structure for the developer
+        // TODO: Implement directory structure setup
         return false
     }
     
@@ -45,7 +108,7 @@ class GitHubServiceImpl(private val httpClient: Any) : GitHubService {
         appMetadata: AppMetadata, 
         channel: ReleaseChannel
     ): Boolean {
-        // This would upload the app metadata to the developer's repository
+        // TODO: Implement metadata upload
         return false
     }
     
@@ -57,7 +120,7 @@ class GitHubServiceImpl(private val httpClient: Any) : GitHubService {
         fileBytes: ByteArray, 
         channel: ReleaseChannel
     ): String? {
-        // This would upload the app package to the developer's repository
+        // TODO: Implement package upload
         return null
     }
     
@@ -68,17 +131,38 @@ class GitHubServiceImpl(private val httpClient: Any) : GitHubService {
         releaseNotes: String, 
         channel: ReleaseChannel
     ): String? {
-        // This would create a release in the developer's repository
+        // TODO: Implement release creation
         return null
     }
     
     override suspend fun getDeveloperApps(developerId: String): List<AppMetadata> {
-        // This would get all apps for a developer from their repository
+        // TODO: Implement app retrieval
         return emptyList()
     }
     
     override suspend fun updateSubmoduleReference(developerId: String): Boolean {
-        // This would update the submodule reference in the main repository
+        // TODO: Implement submodule reference update
         return false
     }
+    
+    // Data classes for deserializing GitHub API responses
+    
+    @Serializable
+    private data class TokenResponse(
+        val access_token: String,
+        val token_type: String = "bearer",
+        val scope: String = ""
+    )
+    
+    @Serializable
+    private data class GitHubUser(
+        val id: Int,
+        val login: String,
+        val name: String? = null,
+        val avatar_url: String,
+        val bio: String? = null,
+        val blog: String? = null,
+        val email: String? = null,
+        val html_url: String
+    )
 } 
